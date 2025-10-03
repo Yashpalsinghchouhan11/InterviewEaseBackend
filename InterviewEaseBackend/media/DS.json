@@ -1,0 +1,27 @@
+[
+    {
+        "questions":[
+            {
+               
+                "question_text": "What is the difference between supervised and unsupervised learning?"
+            },
+            {
+              
+                "question_text": "Explain the bias-variance tradeoff in machine learning."
+            },
+            {
+            
+                "question_text": "What is feature engineering, and why is it important in data science?"
+            },
+            {
+            
+                "question_text": "What is the difference between a DataFrame and a Series in pandas?"
+            },
+            {
+           
+                "question_text": "How do you handle missing data in a dataset?"
+            }
+        ]
+        
+    }
+]

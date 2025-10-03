@@ -1,0 +1,21 @@
+[
+  {
+    "questions": [
+      {
+        "question_text": "What is RESTful API and how does it work?"
+      },
+      {
+        "question_text": "Explain the difference between HTML, CSS, and JavaScript."
+      },
+      {
+        "question_text": "Explain the concept of middleware in backend development."
+      },
+      {
+        "question_text": "What is authentication, and how is it implemented in backend development?"
+      },
+      {
+        "question_text": "What is the DOM in web development?"
+      }
+    ]
+  }
+]

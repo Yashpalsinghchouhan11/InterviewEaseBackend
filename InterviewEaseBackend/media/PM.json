@@ -1,0 +1,27 @@
+[
+    {
+        "questions":[
+            {
+               
+                "question_text": "What is the role of a Product Manager in a development team?"
+            },
+            {
+               
+                "question_text": "Explain the difference between Agile and Waterfall methodologies."
+            },
+            {
+               
+                "question_text": "How do you prioritize features in a product backlog?"
+            },
+            {
+               
+                "question_text": "What are user personas, and why are they important?"
+            },
+            {
+               
+                "question_text": "Explain the concept of Minimum Viable Product (MVP)."
+            }
+        ]
+        
+    }
+]

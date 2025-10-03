@@ -1,0 +1,21 @@
+[
+  {
+    "questions": [
+      {
+        "question_text": "What is cloud computing, and what are its benefits?"
+      },
+      {
+        "question_text": "Explain the differences between IaaS, PaaS, and SaaS."
+      },
+      {
+        "question_text": "What is CI/CD, and how does it improve software delivery?"
+      },
+      {
+        "question_text": "How does Docker work, and what are its key benefits?"
+      },
+      {
+        "question_text": "What is Kubernetes, and how does it relate to container orchestration?"
+      }
+    ]
+  }
+]

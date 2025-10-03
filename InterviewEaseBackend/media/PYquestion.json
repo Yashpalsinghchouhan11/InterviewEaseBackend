@@ -1,0 +1,22 @@
+[
+    {
+        "question_no": 1,
+        "question" : "what is python?"
+    },
+    {
+        "question_no": 2,
+        "question": "What is generators in python ?"
+    },
+    {
+        "question_no": 3,
+        "question": "What is Dictionary in python ?"
+    },
+    {
+        "question_no": 4,
+        "question": "What is List in python ?"
+    },
+    {
+        "question_no": 5,
+        "question": "What is Tuple in python ?"
+    }
+]

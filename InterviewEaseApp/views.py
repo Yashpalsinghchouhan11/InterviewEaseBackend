@@ -309,7 +309,7 @@ def generate_interview_questions(request):
 You are an expert interview question generator.
 
 Task:
-Generate exactly 1 interview questions for a candidate applying for the role of "{domain_name}" 
+Generate exactly 5 interview questions for a candidate applying for the role of "{domain_name}" 
 with a difficulty level of "{difficulty}".
 
 Rules:

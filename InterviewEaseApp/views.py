@@ -7,7 +7,7 @@ from django.conf import settings
 import os
 import json
 from rest_framework.parsers import JSONParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -16,6 +16,9 @@ from Authentication.models import signupModel as User
 from Authentication.views import verify_token
 from .models import Interview, Questions, Answers, Domain
 import google.generativeai as genai 
+from rest_framework.parsers import MultiPartParser, FormParser
+import tempfile
+
 
 # Create your views here.
 
@@ -91,59 +94,6 @@ def Get_questions(request, domain):
             return JsonResponse({'error': 'Question not found.'}, status=404)
         
 
-# @csrf_exempt
-# def getQuestions(request, interview_id):
-#     if request.method == "GET":
-#         # Fetch the index from query parameters
-#         question_index = request.GET.get("index", 0)
-#         try:
-#             question_index = int(question_index)
-#         except ValueError:
-#             return JsonResponse({"status": 400, "message": "Invalid index format"}, status=400)
-
-#         # For hardcoded interview types
-#         # predefined_interviews = ['SD', 'PM', 'HR', 'CD', 'DS']
-#         # if interview_id in predefined_interviews:
-#         #     filename = f'{interview_id}.json'
-#         #     file_path = os.path.join(settings.BASE_DIR, 'InterviewEaseBackend', 'media', filename)
-
-#         #     try:
-#         #         with open(file_path, 'r') as file:
-#         #             questions = json.load(file)
-#         #     except FileNotFoundError:
-#         #         return JsonResponse({'status': 404, 'message': 'Question file not found.'}, status=404)
-
-#         #     if 0 <= question_index < len(questions):
-#         #         return JsonResponse({
-#         #             "status": 200,
-#         #             "question": questions[question_index][str(question_index)],
-#         #             "index": question_index,
-#         #             "total_questions": len(questions)
-#         #         })
-#         #     else:
-#         #         return JsonResponse({'status': 400, 'message': 'Invalid question index'}, status=400)
-
-#         # # For custom interviews
-#         # else:
-#         try:
-#             interview = Interview.objects.get(pk=interview_id)
-#         except Interview.DoesNotExist:
-#             return JsonResponse({"status": 404, "message": "Interview not found"}, status=404)
-#         questions = Questions.objects.filter(interview=interview).order_by('id')
-#         if 0 <= question_index < len(questions):
-#             question = questions[question_index]
-#             return JsonResponse({
-#                 "status": 200,
-#                 "question": question.question_text,
-#                 "index": question_index,
-#                 "total_questions": len(questions),
-#                 "questionId":question.id
-#             })
-#         else:
-#             return JsonResponse({'status': 400, 'message': 'Invalid question index'}, status=400)
-
-#     return JsonResponse({"status": 405, "message": "Method not allowed"}, status=405)
-
 
 @csrf_exempt
 @api_view(['GET'])
@@ -164,7 +114,6 @@ def get_questions(request, interview_id):
 
         # 🔹 Get ordered questions for this interview
         questions = Questions.objects.filter(interview=interview).order_by("id")
-        print(questions)
 
         if not questions:
             return Response({"status": 404, "message": "No questions found for this interview"}, status=404)
@@ -370,82 +319,6 @@ Rules:
         return Response({"error": str(e)}, status=500)
 
 
-HESITATION_WORDS = ["hmm", "um", "uh", "umm", "like", "you know", "i think", "maybe", "sort of"]
-
-def check_confidence(answer_text: str):
-    text = answer_text.lower()
-    hesitation_count = sum(text.count(word) for word in HESITATION_WORDS)
-    
-    if hesitation_count == 2:
-        return "Confident"
-    elif hesitation_count <= 5:
-        return "Slightly hesitant"
-    else:
-        return "Hesitant"
-
-
-@csrf_exempt
-@api_view(['POST'])
-def evaluate_answer(request):
-    try:
-        user_id, error_response = verify_token(request)
-        if error_response:
-            return error_response
-
-        question_text = request.data.get("question_text")
-        answer_text = request.data.get("answer_text")
-
-        if not question_text or not answer_text:
-            return Response({"error": "Both question_text and answer_text are required"}, status=400)
-
-        # 1️⃣ Get text feedback from Gemini
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        # Detect tone using filler words
-        voice_confidence = check_confidence(answer_text)
-
-        # Use improved AI prompt
-        prompt = f"""
-        You are an experienced interview coach. 
-        Evaluate the candidate’s answer in context.
-
-        Question: {question_text}
-        Answer: {answer_text}
-
-        Evaluation Rules:
-        - Be honest but encouraging (human-like tone).
-        - If the answer is confident and accurate, acknowledge it.
-        - If hesitation or filler words are present, gently mention it.
-        - Highlight only the most important area(s) of improvement.
-        - Keep feedback short (2–3 sentences).
-        - Return the result in JSON format with these keys:
-        {{
-          "status": "success",
-          "Tone": "{voice_confidence}",
-          "Feedback": "Overall appreciation and insights",
-          "Area of Improvement": "1–2 key things to improve"
-        }}
-        Only return valid JSON, nothing else.
-        """
-
-        response = model.generate_content(prompt)
-        import json
-        try:
-            text_feedback = json.loads(response.text)
-        except:
-            text_feedback = {"raw_feedback": response.text}
-
-        return Response({
-            "status": "success",
-            "text_feedback": text_feedback,
-            "voice_feedback": {
-                "confidence_level": voice_confidence
-            }
-        }, status=200)
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
-
-
 @csrf_exempt
 @api_view(['GET'])
 def feedback_report(request):
@@ -521,3 +394,114 @@ Transcript: {all_text}
 
     except Interview.DoesNotExist:
         return Response({"status": "error", "message": "Interview not found"}, status=404)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
+def generate_interview_from_resume(request):
+    try:
+        # 🔹 Verify JWT token
+        user_id, error_response = verify_token(request)
+        if error_response:
+            return error_response
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        # 🔹 Get uploaded file
+        resume_file = request.FILES.get("resume")
+        # getting other details
+        domain_name = request.data.get("domain")
+        difficulty = request.data.get("difficulty")
+
+        print(resume_file, domain_name, difficulty)
+        if not resume_file:
+            return Response({"error": "Resume file is required"}, status=400)
+        
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+            for chunk in resume_file.chunks():
+                temp_file.write(chunk)
+            temp_path = temp_file.name
+
+        uploaded_file = genai.upload_file(temp_path)
+
+
+        # 🔹 Upload file to Gemini
+        # uploaded_file = genai.upload_file(resume_file)
+
+        # 🔹 Initialize model
+        model = genai.GenerativeModel("gemini-2.0-flash")
+
+        # 🔹 Create prompt
+        prompt = """
+                You are an expert technical interviewer.
+
+                Analyze the attached resume carefully and generate exactly 5 interview questions 
+                that are relevant to the candidate’s background, experience, and technical skills.
+
+                Rules:
+                - Base your questions only on the information in the resume.
+                - Keep them short, clear, and realistic.
+                - Return only valid JSON in this format:
+
+                {
+                  "questions": [
+                    { "question_text": "..." },
+                    { "question_text": "..." },
+                    { "question_text": "..." },
+                    { "question_text": "..." },
+                    { "question_text": "..." }
+                  ]
+                }
+                """
+
+        # 🔹 Send file + prompt to model
+        response = model.generate_content([uploaded_file, prompt])
+
+        # 🔹 Get clean text
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("```").replace("json", "", 1).strip()
+
+        try:
+            parsed = json.loads(raw_text)
+            questions_list = parsed.get("questions", [])
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Failed to parse LLM response", "raw": raw_text}, status=500
+            )
+
+        if not questions_list:
+            return Response({"error": "No questions generated"}, status=500)
+
+        # 🔹 Prepare serializer data
+
+        data = {
+            "user": user.id,
+            "domain": domain_name or "Resume",
+            "difficulty": difficulty or "Easy",
+            "questions": questions_list,
+        }
+        
+        serializer = InterviewSerializer(data=data)
+        if serializer.is_valid():
+            interview = serializer.save()
+            #cleanup
+            os.remove(temp_path)
+        else:
+            return Response(serializer.errors, status=400)
+
+        return Response(
+            {
+                "status": "success",
+                "interview_id": interview.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

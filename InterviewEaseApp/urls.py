@@ -9,4 +9,5 @@ urlpatterns = [
     path("fetch_interview_answers/<str:interview_id>",views.get_answers,name="get_answers"),
     path("generate_interview_questions/",views.generate_interview_questions,name="generate_interview_questions"),
     path("feedback_report/",views.feedback_report,name="feedback_report"),
+    path("generate_interview_from_resume/",views.generate_interview_from_resume, name="generate_interview_from_resume")
 ]

@@ -59,7 +59,7 @@ class Answers(models.Model):
         db_table = 'Answers'
 
     def __str__(self) -> str:
-        return f"Answer to {self.question.question_text} (Interview ID: {self.interview.id})"
+        return f"Answer to {self.question.id} (Interview ID: {self.interview.id})"
     
 class FeedbackReport(models.Model):
     interview = models.OneToOneField(
@@ -78,5 +78,5 @@ class FeedbackReport(models.Model):
         db_table = "FeedbackReports"
 
     def __str__(self):
-        return f"Feedback for Interview {self.interview.id} - Confidence: {self.confidence}"
+        return f"Feedback for Interview {self.interview.id}"
 

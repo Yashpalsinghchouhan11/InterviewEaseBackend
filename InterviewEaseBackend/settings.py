@@ -94,6 +94,11 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 
 
+ALLOWED_HOSTS = ast.literal_eval(os.getenv('ALLOWED_HOSTS', '[]'))
+CORS_ALLOWED_ORIGINS = ast.literal_eval(os.getenv('CORS_ALLOWED_ORIGINS', '[]'))
+CORS_ALLOW_METHODS = ast.literal_eval(os.getenv('CORS_ALLOW_METHODS', '[]'))
+CORS_ALLOW_CREDENTIALS = True
+
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
